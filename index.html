@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
+  <title>打字练习</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+    <h2>「打字练习」</h2>
+    <div class="typing-stats">
+      <span class="stat-item">
+        <span class="stat-label">WPM:</span>
+        <span class="stat-value" id="wpmValue">0</span>
+      </span>
+      <span class="stat-item">
+        <span class="stat-label">CPM:</span>
+        <span class="stat-value" id="cpmValue">0</span>
+      </span>
+      <span class="stat-item">
+        <span class="stat-label">准确率:</span>
+        <span class="stat-value" id="accuracyValue">100%</span>
+      </span>
+      <span class="stat-item">
+        <span class="stat-label">用时:</span>
+        <span class="stat-value" id="timeValue">0:00</span>
+      </span>
+    </div>
+    <div class="dropdown">
+      <button class="dropdown-toggle">
+        四级语句
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="dropdown-menu">
+        <button class="dropdown-item active" data-file="四级.js">
+          四级语句
+        </button>
+        <button class="dropdown-item" data-file="六级.js">六级语句</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section id="box"></section>
+  </main>
+
+  <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+    <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
+  <button class="scroll-to-current" id="scrollToCurrent" aria-label="回到当前单词">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+  <div class="sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M12 20V4" stroke-width="2" stroke-linecap="round" />
+          <path d="M4 12h16" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        选择练习
+      </div>
+      <div class="practice-list">
+        <button class="practice-item active" data-file="四级.js">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          四级语句
+        </button>
+        <button class="practice-item" data-file="六级.js">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          六级语句
+        </button>
+        <!-- 可以在这里添加更多练习选项 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-trigger-hint"></div>
+
+  <script src="四级.js"></script>
+  <script src="六级.js"></script>
+  <script>
+    const $ = (id) => document.querySelectorAll(id);
+    let currentWordList = window.wordList; // 使用window.wordList
+
+    // 获取上次选择的练习文件
+    const lastSelectedFile =
+      localStorage.getItem("selectedPracticeFile") || "四级.js";
+
+    // 添加下拉菜单交互
+    const dropdown = document.querySelector(".dropdown");
+    const dropdownToggle = document.querySelector(".dropdown-toggle");
+    const dropdownItems = document.querySelectorAll(".dropdown-item");
+
+    // 创建遮罩层
+    const overlay = document.createElement("div");
+    overlay.className = "dropdown-overlay";
+    dropdown.parentNode.insertBefore(overlay, dropdown.nextSibling);
+
+    // 切换下拉菜单
+    dropdownToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("active");
+    });
+
+    // 点击遮罩层关闭下拉菜单
+    overlay.addEventListener("click", () => {
+      dropdown.classList.remove("active");
+    });
+
+    // 点击下拉菜单项
+    dropdownItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const fileName = item.dataset.file;
+        if (fileName) {
+          // 更新按钮文本
+          dropdownToggle.textContent = item.textContent;
+          // 更新激活状态
+          dropdownItems.forEach((i) => i.classList.remove("active"));
+          item.classList.add("active");
+          // 关闭下拉菜单
+          dropdown.classList.remove("active");
+          // 切换练习文件
+          switchPracticeFile(fileName);
+        }
+      });
+    });
+
+    // 点击其他地方关闭下拉菜单
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("active");
+      }
+    });
+
+    // 添加打字速度计算相关变量
+    let startTime = null;
+    let totalChars = 0;
+    let totalWords = 0;
+
+    // 生成练习行
+    function generateLine(lineWords, index) {
+      let startIndex = 0;
+      // 计算之前所有组的单词总数
+      if (Array.isArray(currentWordList[0])) {
+        // 二维数组结构（六级.js）
+        for (let i = 0; i < index; i++) {
+          startIndex += currentWordList[i].length;
+        }
+      } else {
+        // 一维数组结构（四级.js）
+        startIndex = index;
+        // 将lineWords转换为数组格式
+        lineWords = [lineWords];
+      }
+
+      return lineWords
+        .map((item, wordIndex) => {
+          const totalIndex = startIndex + wordIndex + 1;
+          return `
+              <div class="line line-${index}-${wordIndex}">
+                <div class="text">
+                  <div class="word-container">
+                    <div class="word-item">
+                      <span class="word-index">${totalIndex}.</span>
+                      <span class="eng-word">${item.sentence}</span>
+                      <span class="translate">${item.translation}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="plain-text">${item.sentence}</div>
+                <input class="inputHidden" type="hidden" value="${item.sentence}">
+                <textarea class="inputWord" rows="1" autocomplete="off" spellcheck="false"></textarea>
+              </div>
+            `;
+        })
+        .join("");
+    }
+
+    // 初始化练习内容
+    function initializePractice() {
+      let linesEle = currentWordList
+        .map((lineWords, index) => {
+          return generateLine(lineWords, index);
+        })
+        .join("");
+
+      $("#box")[0].innerHTML = linesEle;
+      setupEventListeners();
+    }
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 输入事件监听
+      $(".inputWord").forEach((inputEle) => {
+        inputEle.addEventListener("input", handleInput);
+      });
+
+      // 点击行事件监听
+      document.querySelectorAll(".line").forEach((line) => {
+        const plainText = line.querySelector(".plain-text");
+        plainText.setAttribute("data-original-text", plainText.textContent);
+
+        line.addEventListener("click", function (e) {
+          if (e.target.classList.contains("inputWord")) return;
+          switchToLine(this);
+        });
+      });
+
+      // 初始化第一行高亮
+      const firstLine = document.querySelector(".line");
+      if (firstLine) {
+        highlightCurrentLine(firstLine);
+      }
+    }
+
+    // 处理输入事件
+    function handleInput(e) {
+      let currInputEle = e.target;
+      let currInputHiddenEle = currInputEle.previousElementSibling;
+      let currPlainTextEle =
+        currInputEle.parentElement.querySelector(".plain-text");
+
+      let targetValue = currInputHiddenEle.value;
+      let inputValue = currInputEle.value;
+
+      // 初始化开始时间
+      if (!startTime && inputValue.length > 0) {
+        startTime = new Date();
+      }
+
+      // 计算打字速度
+      if (startTime) {
+        const currentTime = new Date();
+        const timeElapsed = (currentTime - startTime) / 1000 / 60; // 转换为分钟
+
+        // 计算总字符数和单词数
+        totalChars = inputValue.length;
+        totalWords = totalChars / 5; // 标准：5个字符算一个单词
+
+        // 计算CPM和WPM
+        const cpm = Math.round(totalChars / timeElapsed) || 0;
+        const wpm = Math.round(totalWords / timeElapsed) || 0;
+
+        // 计算准确率
+        let correctChars = 0;
+        const inputLength = Math.min(inputValue.length, targetValue.length);
+        for (let i = 0; i < inputLength; i++) {
+          if (inputValue[i] === targetValue[i]) {
+            correctChars++;
+          }
+        }
+        const accuracy =
+          Math.round((correctChars / inputLength) * 100) || 100;
+
+        // 更新显示
+        document.getElementById("cpmValue").textContent = cpm;
+        document.getElementById("wpmValue").textContent = wpm;
+        document.getElementById("accuracyValue").textContent = accuracy + "%";
+      }
+
+      let result = targetValue
+        .split("")
+        .map((char, index) => {
+          const hasInput = index < inputValue.length;
+          const inputChar = hasInput ? inputValue[index] : null;
+
+          // 处理空格（保持原始位置，添加背景色）
+          if (char === " ") {
+            return hasInput
+              ? inputChar === " "
+                ? '<span class="green space"> </span>' // 正确输入空格
+                : '<span class="red space"> </span>' // 在空格位置输入其他字符显示红色
+              : '<span class="space"> </span>'; // 未输入时保持原样
+          }
+
+          return hasInput
+            ? inputChar === char
+              ? `<span class="green">${char}</span>`
+              : `<span class="red">${char}</span>`
+            : char;
+        })
+        .join("");
+
+      currPlainTextEle.innerHTML = result;
+
+      if (inputValue === targetValue) {
+        currInputEle.value = "";
+        currPlainTextEle.innerHTML = targetValue;
+        let nextLine = currInputEle.closest(".line").nextElementSibling;
+        if (nextLine) {
+          let nextInput = nextLine.querySelector(".inputWord");
+
+          nextLine.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+
+          highlightCurrentLine(nextLine);
+
+          // 重置计时器
+          startTime = null;
+          totalChars = 0;
+          totalWords = 0;
+          document.getElementById("cpmValue").textContent = "0";
+          document.getElementById("wpmValue").textContent = "0";
+
+          setTimeout(() => {
+            nextInput.focus();
+          }, 300);
+        }
+      }
+    }
+
+    // 切换练习文件
+    async function switchPracticeFile(fileName) {
+      try {
+        // 保存选择的文件到本地存储
+        localStorage.setItem("selectedPracticeFile", fileName);
+
+        // 清空当前内容
+        $("#box")[0].innerHTML = "";
+        currentWordList = null;
+
+        // 移除所有已加载的脚本
+        document.querySelectorAll('script[src$=".js"]').forEach((script) => {
+          if (
+            script.src.endsWith("四级.js") ||
+            script.src.endsWith("六级.js")
+          ) {
+            script.parentNode.removeChild(script);
+          }
+        });
+
+        // 重置全局变量
+        window.wordList = null;
+
+        // 等待一小段时间确保清理完成
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // 加载新脚本
+        const script = document.createElement("script");
+        script.src = fileName;
+
+        // 等待脚本加载完成
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            // 更新当前词库
+            currentWordList = window.wordList;
+            resolve();
+          };
+          script.onerror = (e) => {
+            console.error("Failed to load script:", e);
+            reject(new Error("Failed to load practice file"));
+          };
+          document.body.appendChild(script);
+        });
+
+        // 重新初始化练习
+        initializePractice();
+
+        // 更新按钮状态
+        document.querySelectorAll(".practice-item").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.dataset.file === fileName) {
+            btn.classList.add("active");
+          }
+        });
+      } catch (error) {
+        console.error("Error loading practice file:", error);
+        alert("加载练习文件失败，请重试");
+      }
+    }
+
+    // 初始化时加载上次选择的文件
+    document.addEventListener("DOMContentLoaded", () => {
+      // 移除所有已加载的脚本
+      document.querySelectorAll('script[src$=".js"]').forEach((script) => {
+        if (
+          script.src.endsWith("四级.js") ||
+          script.src.endsWith("六级.js")
+        ) {
+          script.parentNode.removeChild(script);
+        }
+      });
+
+      // 加载上次选择的文件
+      switchPracticeFile(lastSelectedFile);
+
+      // 更新按钮状态
+      document.querySelectorAll(".practice-item").forEach((btn) => {
+        btn.classList.remove("active");
+        if (btn.dataset.file === lastSelectedFile) {
+          btn.classList.add("active");
+        }
+      });
+    });
+
+    // 添加鼠标移入移出事件
+    let sidebarTimeout;
+    const sidebarTriggerHint = document.querySelector(
+      ".sidebar-trigger-hint"
+    );
+    const sidebar = document.querySelector(".sidebar");
+
+    // 确保提示元素和侧边栏存在
+    if (sidebarTriggerHint && sidebar) {
+      // 初始化时显示提示
+      setTimeout(() => {
+        if (!sidebar.classList.contains("visible")) {
+          sidebarTriggerHint.style.display = "block";
+          sidebarTriggerHint.style.opacity = "0.8";
+        }
+      }, 2000);
+
+      // 监听提示元素的鼠标事件
+      sidebarTriggerHint.addEventListener("mouseenter", () => {
+        clearTimeout(sidebarTimeout);
+        sidebar.classList.add("visible");
+        sidebarTriggerHint.style.opacity = "0";
+      });
+
+      // 监听侧边栏的鼠标事件
+      sidebar.addEventListener("mouseenter", () => {
+        clearTimeout(sidebarTimeout);
+        sidebar.classList.add("visible");
+        sidebarTriggerHint.style.opacity = "0";
+      });
+
+      sidebar.addEventListener("mouseleave", (e) => {
+        if (e.clientX > 240) {
+          sidebarTimeout = setTimeout(() => {
+            sidebar.classList.remove("visible");
+            // 确保侧边栏完全隐藏后再显示提示
+            setTimeout(() => {
+              if (!sidebar.classList.contains("visible")) {
+                sidebarTriggerHint.style.opacity = "0.8";
+              }
+            }, 300);
+          }, 300);
+        }
+      });
+
+      // 监听文档的鼠标移动
+      document.addEventListener("mousemove", (e) => {
+        if (e.clientX <= 50) {
+          // 鼠标距离左边界的触发距离
+          clearTimeout(sidebarTimeout);
+          sidebar.classList.add("visible");
+          sidebarTriggerHint.style.opacity = "0";
+        } else if (e.clientX > 240 && !sidebar.contains(e.target)) {
+          sidebarTimeout = setTimeout(() => {
+            sidebar.classList.remove("visible");
+            // 确保侧边栏完全隐藏后再显示提示
+            setTimeout(() => {
+              if (!sidebar.classList.contains("visible")) {
+                sidebarTriggerHint.style.opacity = "0.8";
+              }
+            }, 300);
+          }, 300);
+        }
+      });
+
+      // 页面加载和刷新时的初始状态
+      window.addEventListener("load", () => {
+        if (!sidebar.classList.contains("visible")) {
+          setTimeout(() => {
+            sidebarTriggerHint.style.display = "block";
+            sidebarTriggerHint.style.opacity = "0.8";
+          }, 2000);
+        }
+      });
+
+      // 处理页面可见性变化
+      document.addEventListener("visibilitychange", () => {
+        if (
+          document.visibilityState === "visible" &&
+          !sidebar.classList.contains("visible")
+        ) {
+          sidebarTriggerHint.style.opacity = "0.8";
+        }
+      });
+    }
+
+    // 为练习列表按钮添加点击事件
+    const practiceItems = document.querySelectorAll(".practice-item");
+    practiceItems.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const fileName = btn.dataset.file;
+        if (fileName) {
+          // 更新激活状态
+          practiceItems.forEach((i) => i.classList.remove("active"));
+          btn.classList.add("active");
+          // 切换练习文件
+          switchPracticeFile(fileName);
+          // 关闭侧边栏
+          setTimeout(() => {
+            sidebar.classList.remove("visible");
+            setTimeout(() => {
+              sidebarTriggerHint.style.opacity = "0.8";
+            }, 300);
+          }, 300);
+        }
+      });
+    });
+
+    // 初始化时显示触发提示
+    setTimeout(() => {
+      sidebarTriggerHint.style.opacity = "0.6";
+    }, 2000);
+
+    // 初始化
+    initializePractice();
+
+    // 添加节流函数
+    function throttle(func, delay) {
+      let lastCall = 0;
+      return function (...args) {
+        const now = new Date().getTime();
+        if (now - lastCall >= delay) {
+          lastCall = now;
+          func.apply(this, args);
+        }
+      };
+    }
+
+    // 在现有的 script 标签末尾添加主题切换功能
+    const themeToggle = document.getElementById("themeToggle");
+    const prefersDarkScheme = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    );
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+      localStorage.setItem(
+        "theme",
+        document.body.classList.contains("dark-theme") ? "dark" : "light"
+      );
+    }
+
+    // 检查本地存储的主题设置
+    const currentTheme = localStorage.getItem("theme");
+    if (currentTheme === "dark") {
+      document.body.classList.add("dark-theme");
+    } else if (currentTheme === "light") {
+      document.body.classList.remove("dark-theme");
+    }
+
+    themeToggle.addEventListener("click", toggleTheme);
+
+    // 监听系统主题变化
+    prefersDarkScheme.addListener((e) => {
+      if (!localStorage.getItem("theme")) {
+        if (e.matches) {
+          document.body.classList.add("dark-theme");
+        } else {
+          document.body.classList.remove("dark-theme");
+        }
+      }
+    });
+
+    // 在 script 标签中添加以下函数
+    function highlightCurrentLine(currentLine) {
+      // 移除所有行的高亮
+      document.querySelectorAll(".line").forEach((line) => {
+        line.classList.remove("active");
+      });
+      // 添加当前行的高亮
+      currentLine.classList.add("active");
+    }
+
+    // 在 script 标签中添加点击切换功能
+    function switchToLine(clickedLine) {
+      // 获取当前激活的行
+      const currentLine = document.querySelector(".line.active");
+
+      // 如果点击的是当前行，不做任何操作
+      if (currentLine === clickedLine) return;
+
+      // 清空当前行的输入
+      if (currentLine) {
+        const currentInput = currentLine.querySelector(".inputWord");
+        currentInput.value = "";
+        const currentPlainText = currentLine.querySelector(".plain-text");
+        currentPlainText.innerHTML =
+          currentPlainText.getAttribute("data-original-text") ||
+          currentPlainText.textContent;
+      }
+
+      // 切换到新行
+      highlightCurrentLine(clickedLine);
+
+      // 滚动到新行
+      clickedLine.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+
+      // 聚焦新行的输入框
+      const newInput = clickedLine.querySelector(".inputWord");
+      setTimeout(() => {
+        newInput.focus();
+      }, 300);
+    }
+
+    const scrollToCurrentBtn = document.getElementById("scrollToCurrent");
+
+    // 显示/隐藏按钮的函数
+    function toggleScrollButton() {
+      const scrollPosition = window.scrollY;
+      if (scrollPosition > 200) {
+        scrollToCurrentBtn.classList.add("visible");
+      } else {
+        scrollToCurrentBtn.classList.remove("visible");
+      }
+    }
+
+    // 使用节流函数优化滚动事件
+    window.addEventListener("scroll", throttle(toggleScrollButton, 300));
+
+    // 点击按钮滚动到当前激活的单词组
+    scrollToCurrentBtn.addEventListener("click", () => {
+      const activeLine = document.querySelector(".line.active");
+      if (activeLine) {
+        activeLine.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+      }
+    });
+
+    // 初始化按钮状态
+    toggleScrollButton();
+
+    // 添加触摸事件优化
+    document.addEventListener("touchstart", function () { }, {
+      passive: true,
+    });
+
+    // 优化移动端点击延迟
+    document
+      .querySelectorAll(
+        ".line, .theme-toggle, .scroll-to-current, .dropdown-toggle, .dropdown-item"
+      )
+      .forEach((element) => {
+        element.addEventListener("touchstart", function () { }, {
+          passive: true,
+        });
+      });
+
+    // 优化移动端输入体验
+    document.querySelectorAll(".inputWord").forEach((input) => {
+      input.setAttribute("inputmode", "text");
+      input.setAttribute("autocomplete", "off");
+      input.setAttribute("autocorrect", "off");
+      input.setAttribute("autocapitalize", "off");
+      input.setAttribute("spellcheck", "false");
+    });
+
+    // 优化移动端滚动体验
+    let touchStartY = 0;
+    document.addEventListener(
+      "touchstart",
+      function (e) {
+        touchStartY = e.touches[0].clientY;
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "touchmove",
+      function (e) {
+        const touchY = e.touches[0].clientY;
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+
+        // 防止下拉刷新
+        if (scrollTop === 0 && touchY > touchStartY) {
+          e.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    // 使用节流函数优化鼠标移动事件
+    document.addEventListener(
+      "mousemove",
+      throttle((e) => {
+        if (e.clientX <= 50) {
+          // 鼠标距离左边界的触发距离
+          clearTimeout(sidebarTimeout);
+          sidebar.classList.add("visible");
+          sidebarTriggerHint.style.opacity = "0";
+        } else if (e.clientX > 240 && !sidebar.contains(e.target)) {
+          sidebarTimeout = setTimeout(() => {
+            sidebar.classList.remove("visible");
+            // 确保侧边栏完全隐藏后再显示提示
+            setTimeout(() => {
+              if (!sidebar.classList.contains("visible")) {
+                sidebarTriggerHint.style.opacity = "0.8";
+              }
+            }, 300);
+          }, 300);
+        }
+      }, 300)
+    );
+  </script>
+</body>
+
+</html>
